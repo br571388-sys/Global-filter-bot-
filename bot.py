@@ -1,6 +1,5 @@
 import logging
 import logging.config
-import asyncio
 
 # Get logging configurations
 logging.config.fileConfig('logging.conf')
@@ -104,7 +103,5 @@ class Bot(Client):
                 current += 1
 
 
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
 app = Bot()
 app.run()
