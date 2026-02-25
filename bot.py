@@ -1,5 +1,8 @@
 import logging
 import logging.config
+import threading
+import asyncio
+from aiohttp import web
 
 # Get logging configurations
 logging.config.fileConfig('logging.conf')
@@ -11,15 +14,25 @@ from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
 from database.users_chats_db import db
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, PORT ,SUPPORT_CHAT_ID
+from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, PORT, SUPPORT_CHAT_ID
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script 
 from datetime import date, datetime 
 import pytz
-from aiohttp import web
-from plugins import web_server
+from plugins.web_server import web_server
+
+def run_web_server():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    app_runner = loop.run_until_complete(web_server())
+    runner = web.AppRunner(app_runner)
+    loop.run_until_complete(runner.setup())
+    site = web.TCPSite(runner, "0.0.0.0", int(PORT))
+    loop.run_until_complete(site.start())
+    print(f"✅ Web Server Started on port {PORT}!")
+    loop.run_forever()
 
 class Bot(Client):
 
@@ -54,10 +67,6 @@ class Bot(Client):
         time = now.strftime("%H:%M:%S %p")
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
         await self.send_message(chat_id=SUPPORT_CHAT_ID, text=script.RESTART_GC_TXT.format(today, time))
-        app = web.AppRunner(await web_server())
-        await app.setup()
-        bind_address = "0.0.0.0"
-        await web.TCPSite(app, bind_address, PORT).start()
 
     async def stop(self, *args):
         await super().stop()
@@ -103,5 +112,11 @@ class Bot(Client):
                 current += 1
 
 
+# Web server pehle start karo
+t = threading.Thread(target=run_web_server)
+t.daemon = True
+t.start()
+
+# Phir bot start karo
 app = Bot()
 app.run()
