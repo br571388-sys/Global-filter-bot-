@@ -65,8 +65,14 @@ class Bot(Client):
         today = date.today()
         now = datetime.now(tz)
         time = now.strftime("%H:%M:%S %p")
-        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
-        await self.send_message(chat_id=SUPPORT_CHAT_ID, text=script.RESTART_GC_TXT.format(today, time))
+        try:
+            await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
+        except Exception as e:
+            logging.error(f"LOG_CHANNEL Error: {e}")
+        try:
+            await self.send_message(chat_id=SUPPORT_CHAT_ID, text=script.RESTART_GC_TXT.format(today, time))
+        except Exception as e:
+            logging.error(f"SUPPORT_CHAT Error: {e}")
 
     async def stop(self, *args):
         await super().stop()
